@@ -47,10 +47,9 @@ class ImageBindHandler(base_handler.BaseHandler):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
 
     self.task = os.environ.get("TASK", constants.FEATURE_EMBEDDING_GENERATION)
@@ -251,8 +250,7 @@ class ImageBindHandler(base_handler.BaseHandler):
     """
     preds = []
     if self.task == constants.FEATURE_EMBEDDING_GENERATION:
-      for item in output_list:
-        preds.append({k: v.tolist() for k, v in item.items()})
+      preds.extend({k: v.tolist() for k, v in item.items()} for item in output_list)
     elif self.task == constants.ZERO_SHOT_CLASSIFICATION:
       for item in output_list:
         modalities = list(item.keys())

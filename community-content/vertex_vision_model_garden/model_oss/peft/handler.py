@@ -50,10 +50,9 @@ class PeftHandler(BaseHandler):
     )
 
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
     self.precision_mode = os.environ.get(
         "PRECISION_LOADING_MODE", constants.PRECISION_MODE_16
@@ -119,9 +118,7 @@ class PeftHandler(BaseHandler):
       model.to(self.map_location)
       self.model = model
       self.tokenizer = tokenizer
-    elif (
-        self.task == CAUSAL_LANGUAGE_MODELING_LORA or self.task == INSTRUCT_LORA
-    ):
+    elif self.task in [CAUSAL_LANGUAGE_MODELING_LORA, INSTRUCT_LORA]:
       tokenizer = AutoTokenizer.from_pretrained(self.base_model_id)
       logging.debug("Initialized the tokenizer.")
       if self.task == CAUSAL_LANGUAGE_MODELING_LORA:
@@ -220,9 +217,7 @@ class PeftHandler(BaseHandler):
         outputs = self.model(**encoded_input)
       predictions = outputs.logits.argmax(dim=-1)
       predicted_results = predictions.tolist()
-    elif (
-        self.task == CAUSAL_LANGUAGE_MODELING_LORA or self.task == INSTRUCT_LORA
-    ):
+    elif self.task in [CAUSAL_LANGUAGE_MODELING_LORA, INSTRUCT_LORA]:
       predicted_results = self.pipeline(
           prompts,
           max_length=max_length,
@@ -237,14 +232,8 @@ class PeftHandler(BaseHandler):
 
   def postprocess(self, data: Any) -> List[str]:
     """Postprocesses output data."""
-    if self.task == TEXT_TO_IMAGE_LORA:
-      # Converts the images to base64 string.
-      outputs = [
-          image_format_converter.image_to_base64(image) for image in data
-      ]
-    else:
-      outputs = data
-    return outputs
+    return ([image_format_converter.image_to_base64(image)
+             for image in data] if self.task == TEXT_TO_IMAGE_LORA else data)
 
 
 # pylint: enable=logging-fstring-interpolation

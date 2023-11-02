@@ -50,16 +50,15 @@ class TimmHandler(ImageClassifier):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
 
     # Load timm model by model name.
     self.model_name = os.environ["MODEL_NAME"]
     # Whether to use timm pretrained weights, MODEL_PT_PATH overrides this.
-    timm_pretrained = True if os.environ.get("TIMM_PRETRAINED") else False
+    timm_pretrained = bool(os.environ.get("TIMM_PRETRAINED"))
     # Load custom checkpoint, it overrides TIMM_PRETRAINED model.
     self.model_pt_path = os.environ.get("MODEL_PT_PATH")
     if self.model_pt_path and self.model_pt_path.startswith(GCS_PREFIX):
@@ -86,8 +85,7 @@ class TimmHandler(ImageClassifier):
       self.model.to(self.device)
     self.model.eval()
 
-    mapping_file_path = os.environ.get("INDEX_TO_NAME_FILE")
-    if mapping_file_path:
+    if mapping_file_path := os.environ.get("INDEX_TO_NAME_FILE"):
       if mapping_file_path.startswith(GCS_PREFIX):
         mapping_file_path = download_gcs_file(mapping_file_path, DOWNLOAD_DIR)
       self.mapping = load_label_mapping(mapping_file_path)

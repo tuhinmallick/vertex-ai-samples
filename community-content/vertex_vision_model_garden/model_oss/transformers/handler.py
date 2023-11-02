@@ -57,10 +57,9 @@ class TransformersHandler(BaseHandler):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
 
     self.manifest = context.manifest
     # The model id is can be either:
@@ -141,25 +140,19 @@ class TransformersHandler(BaseHandler):
     """Reformat zero-shot-object-detection output."""
     if not data:
       return [data]
-    boxes = {}
-    boxes["label"] = data[0]["label"]
-    boxes["boxes"] = []
+    boxes = {"label": data[0]["label"], "boxes": []}
     for item in data:
-      box = {}
-      box["score"] = item["score"]
+      box = {"score": item["score"]}
       box.update(item["box"])
       boxes["boxes"].append(box)
-    outputs = [boxes]
-    return outputs
+    return [boxes]
 
   def preprocess(
       self, data: Any
   ) -> Tuple[Optional[List[str]], Optional[List[Image.Image]]]:
     """Preprocess input data."""
-    texts = None
     images = None
-    if "text" in data[0]:
-      texts = [item["text"] for item in data]
+    texts = [item["text"] for item in data] if "text" in data[0] else None
     if "image" in data[0]:
       images = [
           image_format_converter.base64_to_image(item["image"]) for item in data

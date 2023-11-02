@@ -65,10 +65,9 @@ class DiffusersHandler(BaseHandler):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
 
     self.model_id = os.environ["MODEL_ID"]
@@ -232,11 +231,9 @@ class DiffusersHandler(BaseHandler):
       # output shape is (num_frames, height, width * len(prompts), channels).
       # Therefore we need to split the output into different videos.
       predicted_images = np.array_split(predicted_images, len(prompts), axis=2)
-      videos = [
-          frames_to_video_bytes(images, fps=8)
-          for images in predicted_images
+      return [
+          frames_to_video_bytes(images, fps=8) for images in predicted_images
       ]
-      return videos
     else:
       raise ValueError(f"Invalid TASK: {self.task}")
     return predicted_images

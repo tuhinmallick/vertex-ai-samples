@@ -169,11 +169,7 @@ def get_best_eval_metric(objective: str, params: Any) -> str:
       eval_metric_name = constants.IMAGE_SEGMENTATION_BEST_EVAL_METRIC
     else:
       raise ValueError(
-          'The objective must be {}, {}, or {}.'.format(
-              constants.OBJECTIVE_IMAGE_CLASSIFICATION,
-              constants.OBJECTIVE_IMAGE_OBJECT_DETECTION,
-              constants.OBJECTIVE_IMAGE_SEGMENTATION,
-          )
+          f'The objective must be {constants.OBJECTIVE_IMAGE_CLASSIFICATION}, {constants.OBJECTIVE_IMAGE_OBJECT_DETECTION}, or {constants.OBJECTIVE_IMAGE_SEGMENTATION}.'
       )
   return eval_metric_name
 
@@ -243,11 +239,11 @@ def parse_params() -> Any:
       learning_rate.initial_learning_rate = _LEARNING_RATE.value
 
   if _WEIGHT_DECAY.value and 'yolo' in FLAGS.experiment:
-    if 'sgd_torch' == params.trainer.optimizer_config.optimizer.type:
+    if params.trainer.optimizer_config.optimizer.type == 'sgd_torch':
       params.trainer.optimizer_config.optimizer.sgd_torch.weight_decay = (
           _WEIGHT_DECAY.value
       )
-    elif 'adamw' == params.trainer.optimizer_config.optimizer.type:
+    elif params.trainer.optimizer_config.optimizer.type == 'adamw':
       params.trainer.optimizer_config.optimizer.adamw.weight_decay_rate = (
           _WEIGHT_DECAY.value
       )
@@ -296,7 +292,7 @@ def wait_for_evaluation_file(
   eval_wait_start_time = time.time()
   while not tf.io.gfile.exists(eval_filepath):
     if time.time() - eval_wait_start_time >= max_eval_wait_time:
-      raise ValueError('The eval file {} does not exist.'.format(eval_filepath))
+      raise ValueError(f'The eval file {eval_filepath} does not exist.')
     time.sleep(eval_wait_interval)
   return
 
@@ -309,7 +305,7 @@ def main(_):
   logging.info('The actual training parameters are:\n%s', params.as_dict())
   model_dir = os.path.join(
       FLAGS.model_dir,
-      'trial_' + hypertune_utils.get_trial_id_from_environment(),
+      f'trial_{hypertune_utils.get_trial_id_from_environment()}',
   )
   logging.info('model_dir in this trial is: %s', model_dir)
   if 'train' in FLAGS.mode:

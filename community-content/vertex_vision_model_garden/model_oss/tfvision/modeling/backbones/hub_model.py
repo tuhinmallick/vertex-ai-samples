@@ -116,7 +116,7 @@ class HubModel(tf.keras.Model):
     return x
 
   def get_config(self) -> Mapping[str, Any]:
-    config_dict = {
+    return {
         'handle': self._handle,
         'trainable': self.trainable,
         'mean_rgb': self._mean_rgb,
@@ -125,7 +125,6 @@ class HubModel(tf.keras.Model):
         'signature': self._signature,
         'output_key': self._output_key,
     }
-    return config_dict
 
   @classmethod
   def from_config(cls,

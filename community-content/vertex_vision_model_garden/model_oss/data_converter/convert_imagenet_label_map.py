@@ -53,21 +53,16 @@ def convert_imagenet_label_map_from_text_to_yaml(
     label_map = yaml.safe_load(
         urllib.request.urlopen(input_text_filepath).read()
     )
-    new_label_map = {}
-    for key, value in label_map.items():
-      new_label_map[key + 1] = value
+    new_label_map = {key + 1: value for key, value in label_map.items()}
     new_label_map[0] = 'background'
     label_map = new_label_map
 
   # Adds maps from id to each line.
   if add_ids:
     lines = urllib.request.urlopen(input_text_filepath).readlines()
-    current_id = 0
-    for line in lines:
+    for current_id, line in enumerate(lines):
       label_map[current_id] = line.decode('ascii').strip()
       print(label_map[current_id])
-      current_id += 1
-
   # Saves new label maps as yamls.
   with tf.io.gfile.GFile(output_yaml_filepath, 'w') as writer:
     writer.write(yaml.dump(label_map))

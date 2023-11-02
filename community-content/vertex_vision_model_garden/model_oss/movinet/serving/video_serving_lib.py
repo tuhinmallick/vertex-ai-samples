@@ -403,7 +403,7 @@ def temporal_nonmaximal_suppression(
   Returns:
     DetectionOutput after nonmaximal suppression sorted in ascending timestamps.
   """
-  max_label = max([detection.label for detection in detections])
+  max_label = max(detection.label for detection in detections)
   prev_detections: list[Optional[DetectionOutput]] = [None] * (max_label + 1)
   ret: list[DetectionOutput] = []
   by_time = lambda x: x.timestamp

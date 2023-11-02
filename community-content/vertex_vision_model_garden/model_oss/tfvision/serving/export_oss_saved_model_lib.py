@@ -114,9 +114,7 @@ def export_inference_graph(
           input_name=input_name,
       )
     else:
-      raise ValueError(
-          'Export module not implemented for objective {}.'.format(objective)
-      )
+      raise ValueError(f'Export module not implemented for objective {objective}.')
 
   export_base.export(
       export_module,
@@ -146,7 +144,7 @@ def get_best_oss_trial(
   trial_file_count = 0
   for i in range(max_trial_count):
     current_trial = i + 1
-    current_trial_dir = os.path.join(model_dir, 'trial_' + str(current_trial))
+    current_trial_dir = os.path.join(model_dir, f'trial_{str(current_trial)}')
     current_trial_best_ckpt_dir = os.path.join(current_trial_dir, 'best_ckpt')
     current_trial_best_ckpt_evaluation_filepath = os.path.join(
         current_trial_best_ckpt_dir, 'info.json'

@@ -44,9 +44,7 @@ class OssSegmentationModule(semantic_segmentation.SegmentationModule):
         dtype=tf.string,
     )
 
-    outputs = {
+    return {
         'category_bytes': tf.identity(category_bytes, name='category_bytes'),
         'score_bytes': tf.identity(score_bytes, name='score_bytes'),
     }
-
-    return outputs

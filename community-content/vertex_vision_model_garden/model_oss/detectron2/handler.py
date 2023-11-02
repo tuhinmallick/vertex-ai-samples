@@ -62,10 +62,10 @@ class ModelHandler:
     config_file = "./cfg.yaml"
     download_gcs_file(src_file_path=gcs_model_file, dst_file_path=model_file)
     if not os.path.exists(model_file):
-      raise RuntimeError("Missing model_file: %s" % model_file)
+      raise RuntimeError(f"Missing model_file: {model_file}")
     download_gcs_file(src_file_path=gcs_config_file, dst_file_path=config_file)
     if not os.path.exists(config_file):
-      raise RuntimeError("Missing config_file: %s" % config_file)
+      raise RuntimeError(f"Missing config_file: {config_file}")
 
     # Set up config file.
     cfg = get_cfg()
@@ -149,6 +149,4 @@ _service = ModelHandler()
 def handle(data: Any, context: Any) -> List[Any]:
   if not _service.initialized:
     _service.initialize(context)
-  if data is None:
-    return None
-  return _service.handle(data, context)
+  return None if data is None else _service.handle(data, context)
