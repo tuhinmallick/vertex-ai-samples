@@ -131,9 +131,7 @@ def convert_to_feature(
       value_type = 'float'
 
     else:
-      raise ValueError(
-          'Cannot convert type {} to feature'.format(type(element))
-      )
+      raise ValueError(f'Cannot convert type {type(element)} to feature')
 
     if isinstance(value, list):
       value_type = value_type + '_list'
@@ -159,7 +157,7 @@ def convert_to_feature(
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
   else:
-    raise ValueError('Unknown value_type parameter - {}'.format(value_type))
+    raise ValueError(f'Unknown value_type parameter - {value_type}')
 
 
 def convert_to_string_feature(
@@ -307,7 +305,7 @@ def check_split_ratio(split_ratio: Sequence[float]):
     raise ValueError('split_ratio must contain exactly 3 values.')
   if abs(sum(split_ratio) - 1) > _SPLIT_RATIO_ERROR_THRESHOLD:
     raise ValueError('split_ratio must sum to 1.')
-  if not all([0 <= val <= 1 for val in split_ratio]):
+  if not all(0 <= val <= 1 for val in split_ratio):
     raise ValueError('Entries of split_ratio must be in the range [0, 1].')
 
 
@@ -322,7 +320,7 @@ def check_num_shard(num_shard: Sequence[int]):
   """
   if len(num_shard) != 3:
     raise ValueError('num_shard must contain exactly 3 values.')
-  if not all([val >= 1 for val in num_shard]):
+  if any(val < 1 for val in num_shard):
     raise ValueError('Shards must be at least 1.')
 
 
@@ -542,8 +540,7 @@ def coco_json_to_image_rows(
   if 'images' not in coco_json:
     raise ValueError('"images" is not in the dataset.')
 
-  images = coco_json['images']
-  return images
+  return coco_json['images']
 
 
 def partition_by_ml_use(element: Dict[str, Any], num_partitions: int) -> int:

@@ -120,8 +120,10 @@ def load_results(results_bucket: str,
                 if notebook in accumulative_results:
                     accumulative_results[notebook]['passed'] += build_results[notebook]['passed']
                     accumulative_results[notebook]['failed'] += build_results[notebook]['failed']
-                    if accumulative_results[notebook]['last_time_ran'] > time_created:
-                        accumulative_results[notebook]['last_time_ran'] = time_created
+                    accumulative_results[notebook]['last_time_ran'] = min(
+                        accumulative_results[notebook]['last_time_ran'],
+                        time_created,
+                    )
                 else:
                     accumulative_results[notebook] = build_results[notebook]
                     accumulative_results[notebook]['failed_on_latest_run'] = build_results[notebook]['failed']
@@ -153,12 +155,9 @@ def select_notebook(changed_notebook: str,
         last_time_ran = datetime.datetime.now().replace(tzinfo=None)
 
     # If notebook has not been ran in a long time, force running it
-    if (datetime.datetime.now().replace(tzinfo=None) - last_time_ran).total_seconds() > MAX_AGE_BEFORE_FORCE_RUN:
-        should_test_do_to_age = True
-    else:
-        should_test_do_to_age  = False
-
-
+    should_test_do_to_age = (
+        datetime.datetime.now().replace(tzinfo=None) - last_time_ran
+    ).total_seconds() > MAX_AGE_BEFORE_FORCE_RUN
     # if failed on the last time it was ran, select the notebook
     if failed_on_latest_run:
         inferred_failure_rate = 1
@@ -235,11 +234,9 @@ def _get_notebook_python_version(notebook_path: str) -> str:
         if cell["cell_type"] == "markdown":
             markdown = str.join("", cell["source"])
 
-            # Look for the python version specification pattern
-            re_match = re.search(
+            if re_match := re.search(
                 "python version = (\d\.\d)", markdown, flags=re.IGNORECASE
-            )
-            if re_match:
+            ):
                 # get the version number
                 python_version = re_match.group(1)
                 break
@@ -392,9 +389,9 @@ def get_changed_notebooks(
     with open(test_paths_file) as file:
         lines = [line.strip() for line in file.readlines()]
         lines = [line for line in lines if len(line) > 0]
-        test_paths = [line for line in lines]
+        test_paths = list(lines)
 
-    if len(test_paths) == 0:
+    if not test_paths:
         raise RuntimeError("No test folders found.")
 
     print(f"Checking folders: {test_paths}")
@@ -422,7 +419,7 @@ def get_changed_notebooks(
         else:
             notebooks = []
     else:
-        print(f"Looking for all notebooks.")
+        print("Looking for all notebooks.")
         notebooks_str = subprocess.check_output(["git", "ls-files"] + test_paths)
         notebooks = notebooks_str.decode("utf-8").split("\n")
 
@@ -430,7 +427,7 @@ def get_changed_notebooks(
     notebooks = [notebook for notebook in notebooks if len(notebook) > 0]
     notebooks = [notebook for notebook in notebooks if pathlib.Path(notebook).exists()]
 
-    if len(notebooks) > 0:
+    if notebooks:
         print(f"Found {len(notebooks)} notebooks:")
         for notebook in notebooks:
             print(f"\t{notebook}")
@@ -465,7 +462,7 @@ def _save_results(results: List[NotebookExecutionResult],
 
     client = storage.Client()
     bucket = client.get_bucket(artifacts_bucket)
-    bucket.blob(str(results_file)).upload_from_string(content, 'text/json')
+    bucket.blob(results_file).upload_from_string(content, 'text/json')
 
 
 
@@ -521,7 +518,7 @@ def process_and_execute_notebooks(
         seconds=max(timeout - WORKER_TIMEOUT_BUFFER_IN_SECONDS, 0)
     )
 
-    if len(notebooks) >= 1:
+    if notebooks:
         notebook_execution_results: List[NotebookExecutionResult] = []
 
         print(f"Found {len(notebooks)} modified notebooks: {notebooks}")
@@ -645,7 +642,7 @@ def process_and_execute_notebooks(
         )
 
         # Raise error if any notebooks failed
-        if not all([result.is_pass for result in results_sorted]):
+        if not all(result.is_pass for result in results_sorted):
             raise RuntimeError("Notebook failures detected. See logs for details")
     else:
         print("No notebooks modified in this pull request.")

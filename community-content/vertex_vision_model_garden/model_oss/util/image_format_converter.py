@@ -10,11 +10,9 @@ def image_to_base64(image: Image.Image) -> str:
   """Convert a PIL image to a base64 string."""
   buffer = io.BytesIO()
   image.save(buffer, format="JPEG")
-  image_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
-  return image_str
+  return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
 def base64_to_image(image_str: str) -> Image.Image:
   """Convert a base64 string to a PIL image."""
-  image = Image.open(io.BytesIO(base64.b64decode(image_str)))
-  return image
+  return Image.open(io.BytesIO(base64.b64decode(image_str)))

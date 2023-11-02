@@ -66,45 +66,7 @@ def ping() -> flask.Response:
 @flask_app.route('/predict', methods=['GET', 'POST'])
 def predict_model() -> flask.Response:
   """Predictions."""
-  if flask.request.method == 'POST':
-    contents = flask.request.get_json(force=True)
-
-    logging.info('The input contents are: %s', contents)
-    instances = contents.get('instances', [])
-
-    try:
-      predictions = []
-      for instance in instances:
-        executor = video_serving_lib.parse_request(instance)
-        prediction = executor.get_prediction(
-            movinet_model,
-            _BATCH_SIZE,
-            _FPS,
-            _NUM_FRAMES,
-            _OVERLAP_FRAMES,
-            _OBJECTIVE,
-        )
-        if _OBJECTIVE == constants.OBJECTIVE_VIDEO_CLASSIFICATION:
-          prediction = video_serving_lib.postprocess_vcn(prediction)
-        elif _OBJECTIVE == constants.OBJECTIVE_VIDEO_ACTION_RECOGNITION:
-          prediction = video_serving_lib.postprocess_var(
-              executor.windows, prediction, _CONFIDENCE_THRESHOLD, _MIN_GAP_TIME
-          )
-        predictions.append(prediction)
-    except ValueError as e:
-      return flask.Response(
-          error(str(e)), status=500, mimetype='application/json'
-      )
-
-    return flask.Response(
-        response=json.dumps({
-            'success': True,
-            'predictions': predictions,
-        }),
-        status=200,
-        mimetype='application/json',
-    )
-  else:
+  if flask.request.method != 'POST':
     return flask.Response(
         response=json.dumps({
             'success': True,
@@ -113,6 +75,43 @@ def predict_model() -> flask.Response:
         status=200,
         mimetype='application/json',
     )
+  contents = flask.request.get_json(force=True)
+
+  logging.info('The input contents are: %s', contents)
+  instances = contents.get('instances', [])
+
+  try:
+    predictions = []
+    for instance in instances:
+      executor = video_serving_lib.parse_request(instance)
+      prediction = executor.get_prediction(
+          movinet_model,
+          _BATCH_SIZE,
+          _FPS,
+          _NUM_FRAMES,
+          _OVERLAP_FRAMES,
+          _OBJECTIVE,
+      )
+      if _OBJECTIVE == constants.OBJECTIVE_VIDEO_CLASSIFICATION:
+        prediction = video_serving_lib.postprocess_vcn(prediction)
+      elif _OBJECTIVE == constants.OBJECTIVE_VIDEO_ACTION_RECOGNITION:
+        prediction = video_serving_lib.postprocess_var(
+            executor.windows, prediction, _CONFIDENCE_THRESHOLD, _MIN_GAP_TIME
+        )
+      predictions.append(prediction)
+  except ValueError as e:
+    return flask.Response(
+        error(str(e)), status=500, mimetype='application/json'
+    )
+
+  return flask.Response(
+      response=json.dumps({
+          'success': True,
+          'predictions': predictions,
+      }),
+      status=200,
+      mimetype='application/json',
+  )
 
 
 def main(argv: Sequence[str]) -> None:

@@ -1,4 +1,5 @@
 """Main function to start PEFT finetuning."""
+
 import subprocess
 
 from absl import app
@@ -42,9 +43,7 @@ _OUTPUT_DIR = flags.DEFINE_string(
 _PRECISION_MODE = flags.DEFINE_string(
     'precision_mode',
     constants.PRECISION_MODE_16,
-    'Supported finetuning precision_modes are `{}` and `{}`.'.format(
-        constants.PRECISION_MODE_8, constants.PRECISION_MODE_16
-    ),
+    f'Supported finetuning precision_modes are `{constants.PRECISION_MODE_8}` and `{constants.PRECISION_MODE_16}`.',
 )
 
 _LORA_RANK = flags.DEFINE_integer(
@@ -170,7 +169,7 @@ def main(_) -> None:
         learning_rate=_LEARNING_RATE.value,
     )
   else:
-    raise ValueError('The task {} is not supported.'.format(task))
+    raise ValueError(f'The task {task} is not supported.')
 
 
 if __name__ == '__main__':

@@ -36,11 +36,11 @@ def draw_bounding_box_on_image(
   cv2.rectangle(
       image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), color, thickness
   )
+  scale = 0.4
+  thickness = 1
   # Display the strings below the bounding box
   for i, display_str in enumerate(display_str_list):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    scale = 0.4
-    thickness = 1
     text_width, text_height = cv2.getTextSize(
         display_str, font, scale, thickness
     )[0]
@@ -93,9 +93,7 @@ def draw_boxes(
   for i in range(min(len(boxes), max_boxes)):
     if scores[i] >= min_score:
       xmin, ymin, xmax, ymax = boxes[i]
-      display_str = "{}-{}: {}%".format(
-          track_ids[i], class_names[i], int(100 * scores[i])
-      )
+      display_str = f"{track_ids[i]}-{class_names[i]}: {int(100 * scores[i])}%"
       color = colors[hash(class_names[i]) % len(colors)]
       image = draw_bounding_box_on_image(
           image,

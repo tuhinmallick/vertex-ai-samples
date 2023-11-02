@@ -55,10 +55,9 @@ class OpenclipHandler(BaseHandler):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
 
     model_name = os.environ.get("MODEL", _DEFAULT_MODEL)
@@ -122,17 +121,14 @@ class OpenclipHandler(BaseHandler):
     """Postprocess the image/text featreus for downstream task."""
     preds = []
     if self.task == _FEATURE_EMBEDDING:
-      for item in features:
-        preds.append({k: v.tolist() for k, v in item.items()})
+      preds.extend({k: v.tolist() for k, v in item.items()} for item in features)
     elif self.task == _ZERO_CLASSIFICATION:
       for item in features:
         image_features = item.get(_IMAGE_FEATURES_KEY, None)
         text_features = item.get(_TEXT_FEATURES_KEY, None)
         if image_features is None or text_features is None:
           raise ValueError(
-              "Missing input for {} task. {} received.".format(
-                  _ZERO_CLASSIFICATION, item.keys()
-              )
+              f"Missing input for {_ZERO_CLASSIFICATION} task. {item.keys()} received."
           )
         image_features /= image_features.norm(dim=-1, keepdim=True)
         text_features /= text_features.norm(dim=-1, keepdim=True)

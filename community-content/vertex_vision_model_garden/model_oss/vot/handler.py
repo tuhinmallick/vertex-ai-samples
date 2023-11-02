@@ -36,25 +36,21 @@ class VideoObjectTrackingHandler(BaseHandler):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
 
-    detection_endpoint_id = os.environ.get("DETECTION_ENDPOINT", None)
-    if detection_endpoint_id:
+    if detection_endpoint_id := os.environ.get("DETECTION_ENDPOINT", None):
       self.detection_endpoint = aiplatform.Endpoint(detection_endpoint_id)
-      endpoint_label_map = os.environ.get("LABEL_MAP", None)
-      if endpoint_label_map:
-        endpoint_label_map_file = endpoint_label_map
-        self.label_map = commons.get_label_map(endpoint_label_map_file)
-      else:
+      if not (endpoint_label_map := os.environ.get("LABEL_MAP", None)):
         raise ValueError(
             "LABEL MAP must be provided with DETECTION ENDPOINT:"
             f" {self.detection_endpoint}"
         )
 
+      endpoint_label_map_file = endpoint_label_map
+      self.label_map = commons.get_label_map(endpoint_label_map_file)
     self.track_thresh = os.environ.get("TRACK_THRESHOLD", _TRACK_THRESHOLD)
     self.track_buffer = os.environ.get("TRACK_BUFFER", _TRACK_BUFFER)
     self.match_thresh = os.environ.get("MATCH_THRESHOLD", _MATCH_THRESHOLD)
@@ -170,18 +166,14 @@ class VideoObjectTrackingHandler(BaseHandler):
             remote_video_file_name,
             temp_local_video_file_name,
         )
-        results_info["output_video"] = "{}/{}".format(
-            self.output_bucket, remote_video_file_name
-        )
+        results_info["output_video"] = f"{self.output_bucket}/{remote_video_file_name}"
 
       fileutils.release_text_assets(
           self.output_bucket,
           temp_text_file.name,
           remote_text_file_name,
       )
-      results_info["annotations"] = "{}/{}".format(
-          self.output_bucket, remote_text_file_name
-      )
+      results_info["annotations"] = f"{self.output_bucket}/{remote_text_file_name}"
       video_preds.append(results_info)
 
     return video_preds
@@ -189,8 +181,7 @@ class VideoObjectTrackingHandler(BaseHandler):
   def handle(self, data: Any, context: Any) -> List[Any]:
     model_input = self.preprocess(data)
     model_out = self.inference(model_input)
-    output = self.postprocess(model_out)
-    return output
+    return self.postprocess(model_out)
 
   def postprocess(self, inference_result: List[Any]) -> List[Any]:
     return inference_result

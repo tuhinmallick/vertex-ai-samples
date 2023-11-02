@@ -123,7 +123,7 @@ def upload_local_dir_to_gcs(local_dir: str, gcs_dir: str):
   blob_dir = '/'.join(gcs_dir.split('/')[3:])
   client = storage.Client()
   bucket = client.bucket(bucket_name)
-  for local_file in glob.glob(local_dir + '/**'):
+  for local_file in glob.glob(f'{local_dir}/**'):
     if os.path.isfile(local_file):
       logging.info(
           'Uploading %s to %s',
@@ -190,7 +190,7 @@ def release_text_assets(
   Returns:
     None
   """
-  remote_file_path = '{}/{}'.format(output_bucket, remote_text_file_name)
+  remote_file_path = f'{output_bucket}/{remote_text_file_name}'
   logging.info('Uploading "%s" to "%s"', local_text_file_name, remote_file_path)
   upload_file_to_gcs_path(local_text_file_name, remote_file_path)
   os.remove(local_text_file_name)
@@ -213,10 +213,8 @@ def upload_video_from_local_to_gcs(
   Returns:
     None
   """
-  upload_file_to_gcs_path(
-      temp_local_video_file_name,
-      '{}/{}'.format(output_bucket, remote_video_file_name),
-  )
+  upload_file_to_gcs_path(temp_local_video_file_name,
+                          f'{output_bucket}/{remote_video_file_name}')
   shutil.rmtree(local_video_file_name, ignore_errors=True)
   shutil.rmtree(temp_local_video_file_name, ignore_errors=True)
 
@@ -251,7 +249,5 @@ def get_output_video_file(video_output_file_path: str) -> str:
     str: Local video output file path.
   """
   file_extension = os.path.splitext(video_output_file_path)[1]
-  out_local_video_file_name = video_output_file_path.replace(
-      file_extension, '_overlay' + file_extension
-  )
-  return out_local_video_file_name
+  return video_output_file_path.replace(file_extension,
+                                        f'_overlay{file_extension}')

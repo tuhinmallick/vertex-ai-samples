@@ -49,10 +49,7 @@ class ClassificationModule(image_classification.ClassificationModule):
     )
 
     self._key_name = key_name
-    if label_path is not None:
-      self._label = self._read_label(label_path)
-    else:
-      self._label = None
+    self._label = self._read_label(label_path) if label_path is not None else None
 
   def _read_label(self, label_path: str) -> tf.Tensor:
     """Reads the labels from a label file."""

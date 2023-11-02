@@ -19,10 +19,11 @@ def get_prediction_instances(image: Image.Image) -> List[Dict[str, Any]]:
   Returns:
     List[Dict[str, Any]]: List of prediction instances.
   """
-  instances = [{
-      "encoded_image": {"b64": image_format_converter.image_to_base64(image)},
+  return [{
+      "encoded_image": {
+          "b64": image_format_converter.image_to_base64(image)
+      },
   }]
-  return instances
 
 
 def get_label_map(label_map_yaml_filepath: str) -> Dict[str, Any]:
@@ -73,7 +74,4 @@ def get_object_detection_endpoint_predictions(
       detection_boxes[thresh_indices],
       detection_scores[thresh_indices],
   ))
-  preds_merge_cls = np.column_stack(
-      (preds_merge_conf, detection_classes[thresh_indices])
-  )
-  return preds_merge_cls
+  return np.column_stack((preds_merge_conf, detection_classes[thresh_indices]))

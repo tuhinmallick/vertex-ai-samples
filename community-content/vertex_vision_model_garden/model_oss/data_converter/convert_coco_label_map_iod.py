@@ -84,12 +84,7 @@ def convert_coco_label_map_80(
     content = file.read()
     label_map = yaml.safe_load(content)
 
-  # Removes background in label maps.
-  new_label_map = {}
-  for k, v in label_map.items():
-    if k == 0:
-      continue
-    new_label_map[k - 1] = v
+  new_label_map = {k - 1: v for k, v in label_map.items() if k != 0}
   print(new_label_map)
   # Saves new label maps as yamls.
   with tf.io.gfile.GFile(output_yaml_filepath, 'w') as writer:

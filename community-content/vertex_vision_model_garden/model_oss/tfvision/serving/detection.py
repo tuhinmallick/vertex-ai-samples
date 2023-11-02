@@ -40,9 +40,7 @@ def load_label_map_to_string_list(label_map_path: str,
   heap = []
   for label_name, label_id in labelmap.items():
     heapq.heappush(heap, (label_id, label_name))
-  label_list = [heapq.heappop(heap)[1] for _ in range(len(heap))]
-
-  return label_list
+  return [heapq.heappop(heap)[1] for _ in range(len(heap))]
 
 
 class DetectionModule(detection_module.DetectionModule):
@@ -172,14 +170,14 @@ class DetectionModule(detection_module.DetectionModule):
 
     # Adding AutoML specific outputs.
     if self._label_map_table is not None:
-      final_outputs.update({
-          automl_constants.DETECTION_CLASSES_AS_TEXT:
-              self._generate_class_text_output(detections['detection_classes'])
-      })
+      final_outputs[
+          automl_constants.
+          DETECTION_CLASSES_AS_TEXT] = self._generate_class_text_output(
+              detections['detection_classes'])
 
-    final_outputs.update({'image_info': image_info})
+    final_outputs['image_info'] = image_info
     if key is not None:
-      final_outputs.update({automl_constants.OUTPUT_KEY_NAME: key})
+      final_outputs[automl_constants.OUTPUT_KEY_NAME] = key
 
     return final_outputs
 

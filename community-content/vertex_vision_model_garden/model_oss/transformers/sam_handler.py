@@ -75,10 +75,9 @@ class TransformersHandler(BaseHandler):
         else "cpu"
     )
     self.device = torch.device(
-        self.map_location + ":" + str(properties.get("gpu_id"))
-        if torch.cuda.is_available() and properties.get("gpu_id") is not None
-        else self.map_location
-    )
+        f"{self.map_location}:" +
+        str(properties.get("gpu_id")) if torch.cuda.is_available()
+        and properties.get("gpu_id") is not None else self.map_location)
     self.manifest = context.manifest
 
     # The model id is can be either:
@@ -122,22 +121,18 @@ class TransformersHandler(BaseHandler):
     """Convert a PIL image to a base64 string."""
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG")
-    image_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return image_str
+    return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
   def _base64_to_image(self, image_str: str) -> Image.Image:
     """Convert a base64 string to a PIL image."""
-    image = Image.open(io.BytesIO(base64.b64decode(image_str)))
-    return image
+    return Image.open(io.BytesIO(base64.b64decode(image_str)))
 
   def preprocess(
       self, data: Any
   ) -> Tuple[Optional[List[str]], Optional[List[Image.Image]]]:
     """Preprocess input data."""
-    texts = None
     images = None
-    if "point" in data[0]:
-      texts = [item["point"] for item in data]
+    texts = [item["point"] for item in data] if "point" in data[0] else None
     if "image" in data[0]:
       images = [self._base64_to_image(item["image"]) for item in data]
     return texts, images
@@ -147,20 +142,18 @@ class TransformersHandler(BaseHandler):
     _, images = data
     preds = []
     for img in images:
-      if self.task == MASK_GENERATION:
-        outputs = self.pipeline(img, points_per_batch=64)
-        masks = np.array([m.tolist() for m in outputs["masks"]])
-        preds.append(masks)
-      else:
+      if self.task != MASK_GENERATION:
         raise ValueError(f"Invalid TASK: {self.task}")
+      outputs = self.pipeline(img, points_per_batch=64)
+      masks = np.array([m.tolist() for m in outputs["masks"]])
+      preds.append(masks)
     return preds
 
   def handle(self, data: Any, context: Any) -> List[Any]:  # pylint: disable=unused-argument
     """Runs preprocess, inference, and post-processing."""
     model_input = self.preprocess(data)
     model_out = self.inference(model_input)
-    output = self.postprocess(model_out)
-    return output
+    return self.postprocess(model_out)
 
   def postprocess(self, inference_result: List[Any]) -> List[Any]:
     """Post process inference result."""
